@@ -1,0 +1,116 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define MAX_VERTICES 40
+
+int graph[MAX_VERTICES][MAX_VERTICES], n, visited[MAX_VERTICES] = {0}, acyclic = 1;
+
+// Function to dynamically create a graph by reading an adjacency matrix
+void createGraph() {
+    printf("No. of vertices>> ");
+    scanf("%d", &n);
+
+    if (n > MAX_VERTICES) {
+        printf("Number of vertices exceeds the maximum allowed (%d).\n", MAX_VERTICES);
+        exit(1);
+    }
+
+    printf("Enter adjacency matrix (%d x %d):\n", n, n);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            scanf("%d", &graph[i][j]);
+        }
+    }
+}
+
+// Function to perform DFS and check for acyclicity
+void dfs(int v) {
+    visited[v] = 1;
+    for (int i = 0; i < n; i++) {
+        if (graph[v][i] && !visited[i]) {
+            printf("%d --> ", v);
+            dfs(i);
+        }
+        
+        if (graph[v][i] && visited[i]) {
+            acyclic = 0;
+        }
+    }
+}
+
+// Function to measure the performance of graph traversal
+void plotter() {
+    FILE *results;
+    results = fopen("graph_results.txt", "w");
+
+    if (results == NULL) {
+        printf("Error opening file!\n");
+        return;
+    }
+
+    int sizes[] = {5, 10, 20, 30}; // Example sizes
+    for (int k = 0; k < sizeof(sizes) / sizeof(sizes[0]); k++) {
+        n = sizes[k];
+        printf("Testing graph size %d...\n", n);
+
+        // Create a graph with random edges
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                graph[i][j] = rand() % 2; // Random 0 or 1
+            }
+        }
+
+        clock_t start = clock();
+
+        // Reset visited array
+        for (int i = 0; i < n; i++) visited[i] = 0;
+        dfs(0);
+
+        // Check connectivity
+        int count = 0;
+        for (int i = 0; i < n; i++) {
+            if (visited[i]) count++;
+        }
+
+        // Measure elapsed time
+        clock_t end = clock();
+        double elapsed = (double)(end - start) / CLOCKS_PER_SEC;
+
+        fprintf(results, "%d\t%.4f\n", n, elapsed);
+
+        printf("Graph size %d, Time: %.4f seconds\n", n, elapsed);
+    }
+
+    fclose(results);
+}
+
+// Basic tester function to demonstrate graph traversal
+void tester() {
+    printf("Enter your graph data:\n");
+    createGraph();
+
+    // Run DFS from vertex 0
+    printf("Starting DFS traversal from vertex 0...\n");
+    dfs(0);
+
+    // Check and print results
+    int count = 0;
+    for (int i = 0; i < n; i++) {
+        if (visited[i]) count++;
+    }
+
+    printf((count == n) ? "\nConnected Graph\n" : "\nGraph not connected!\n");
+    printf(acyclic ? "Acyclic Graph\n" : "Graph not acyclic!\n");
+}
+
+// Main function
+int main() {
+    // Call the tester function to dynamically read input and demonstrate graph traversal
+    tester();
+
+    // Call the plotter function to measure performance
+    plotter();
+
+    return 0;
+}
